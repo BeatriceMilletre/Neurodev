@@ -124,3 +124,126 @@ def compute_dimension_scores(all_scores):
     return pd.DataFrame(rows)
 
 def plot_radar(df):
+    dims = df["Dimension"].tolist()
+    scores = df["Score"].astype(float).to_numpy()
+    maxs = df["Max"].astype(float).to_numpy()
+    vals = scores / maxs
+
+    N = len(dims)
+    angles = np.linspace(0, 2*np.pi, N, endpoint=False).tolist()
+    vals = np.concatenate((vals, [vals[0]]))
+    angles += angles[:1]
+
+    fig = plt.figure(figsize=(6,6))
+    ax = plt.subplot(111, polar=True)
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(dims, fontsize=9)
+    ax.set_rlabel_position(0)
+    ax.set_yticks([0.25, 0.5, 0.75, 1.0])
+    ax.set_yticklabels(["10/40", "20/40", "30/40", "40/40"], fontsize=8)
+    ax.set_ylim(0, 1)
+    ax.plot(angles, vals, linewidth=2)
+    ax.fill(angles, vals, alpha=0.25)
+    title_lines = [f"{d}: {int(s)}/40" for d, s in zip(dims, scores)]
+    title = f"Profil en etoile – {patient_name}\n" + " | ".join(title_lines)
+    plt.title(title, fontsize=10, pad=20)
+    fig.tight_layout()
+    return fig
+
+def interpret_profile(df):
+    scores = dict(zip(df["Dimension"], df["Score"]))
+    out = []
+
+    d1 = scores.get("D1 - Traitement de l'information", scores.get("D1 - Traitement de l’information", 0))
+    d2 = scores.get("D2 - Sensorialite", scores.get("D2 - Sensorialité", 0))
+    d3 = scores.get("D3 - Attention et concentration", 0)
+    d4 = scores.get("D4 - Cognition sociale et communication", 0)
+    d5 = scores.get("D5 - Emotions et regulation", scores.get("D5 - Émotions et régulation", 0))
+    d6 = scores.get("D6 - Creativite et intuition", scores.get("D6 - Créativité et intuition", 0))
+    d7 = scores.get("D7 - Double exceptionnelite", scores.get("D7 - Double exceptionnalité", 0))
+    d8 = scores.get("D8 - Temporalite et rythmes", scores.get("D8 - Temporalité et rythmes", 0))
+
+    # HPI
+    if (d1 >= 20) and (d6 >= 28) and (d5 >= 24) and (d4 >= 20):
+        out.append("🟣 Profil compatible HPI : pensee associative, creativite intuitive, intensite emotionnelle et exigence de valeurs.")
+
+    # TDAH
+    if d3 >= 24:
+        out.append("🟠 Profil compatible TDAH : difficultes attentionnelles persistantes avec impact fonctionnel (oublis, taches inachevees).")
+
+    # TSA
+    if (d4 >= 24) and (d2 >= 24):
+        out.append("🔵 Profil compatible TSA : literalite sociale et/ou sensibilite sensorielle elevee.")
+
+    # 2E
+    if (d7 >= 24) and ((d1 >= 28) or (d6 >= 28) or (d5 >= 28)):
+        out.append("🟢 Profil compatible 2E (double exceptionnalite) : coexistence de forces marquees et de difficultes importantes.")
+
+    # NT
+    if all(v <= 15 for v in [d1, d2, d3, d4, d5, d6, d7, d8]):
+        out.append("⚪ Profil compatible Neurotypique (NT) : equilibre attentionnel, emotionnel et sensoriel sans particularite marquee.")
+
+    if not out:
+        out.append("Profil nuance : aucune orientation claire unique. Interpretez cliniquement et croisez avec l'anamnese / l'historique.")
+    return out
+
+def show_results(df_scores):
+    col1, col2 = st.columns([1,1])
+    with col1:
+        st.subheader("Scores par dimension")
+        st.dataframe(df_scores, use_container_width=True)
+        csv = df_scores.to_csv(index=False).encode("utf-8")
+        st.download_button("⬇️ Télécharger les scores (CSV)",
+                           data=csv,
+                           file_name=f"scores_{patient_name.replace(' ','_')}.csv",
+                           mime="text/csv")
+    with col2:
+        st.subheader("Vision en etoile (Radar)")
+        fig = plot_radar(df_scores)
+        st.pyplot(fig)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=200, bbox_inches="tight")
+        st.download_button("⬇️ Télécharger le radar (PNG)",
+                           data=buf.getvalue(),
+                           file_name=f"radar_{patient_name.replace(' ','_')}.png",
+                           mime="image/png")
+    st.subheader("🧾 Interpretation automatique")
+    for t in interpret_profile(df_scores):
+        st.markdown(t)
+
+# ----------------------------- Mode: Import CSV -----------------------------
+if mode == "Importer un CSV de scores":
+    st.info("Importez un fichier CSV avec les colonnes: Dimension, Score, Max.")
+    uploaded = st.file_uploader("Importer un fichier de scores (CSV)", type="csv")
+    if uploaded is not None:
+        try:
+            df_scores = pd.read_csv(uploaded)
+            need_cols = {"Dimension","Score","Max"}
+            if not need_cols.issubset(df_scores.columns):
+                st.error("Le CSV doit contenir les colonnes: Dimension, Score, Max.")
+            else:
+                show_results(df_scores)
+        except Exception as e:
+            st.error(f"Erreur de lecture du CSV: {e}")
+
+# ----------------------------- Mode: Questionnaire -----------------------------
+if mode == "Questionnaire":
+    all_scores = {}
+    with st.form("questionnaire"):
+        for dim, items in dimensions.items():
+            with st.expander(dim, expanded=False):
+                dim_scores = []
+                for i, item in enumerate(items, start=1):
+                    s = st.slider(f"{i}. {item}", min_value=0, max_value=4, value=0, step=1, key=f"{dim}_{i}")
+                    dim_scores.append(s)
+                all_scores[dim] = dim_scores
+        submitted = st.form_submit_button("Calculer le profil")
+
+    if submitted:
+        df_scores = compute_dimension_scores(all_scores)
+        show_results(df_scores)
+
+st.markdown("---")
+st.caption("⚠️ Outil d'orientation clinique. Ce questionnaire n'est pas un diagnostic.")
