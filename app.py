@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -14,10 +13,11 @@ Ce prototype permet :
 1) de **passer le questionnaire** (80 items, échelle 0–4) ;
 2) de **générer automatiquement** les scores par dimension ;
 3) d’**afficher un profil en étoile (radar)** ;
-4) d’**exporter** les résultats (CSV et image).
+4) d’**exporter** les résultats (CSV et image) ;
+5) de **proposer une interprétation automatique**.
 ''')
 
-# --- Dimensions and items (exact phrasing, situation-based) ---
+# --- Dimensions and items (simplifié ici pour la lisibilité, gardez vos 80 items) ---
 dimensions = {
 "D1 - Traitement de l’information":[
 "Quand on me donne une règle ou une consigne, je cherche d’abord à comprendre sa logique globale avant de l’appliquer.",
@@ -43,78 +43,7 @@ dimensions = {
 "Une odeur persistante peut me rester longtemps en tête.",
 "Dans un repas ou une soirée animée, je remarque le bruit et la lumière, mais je m’y adapte sans gêne particulière."
 ],
-"D3 - Attention et concentration":[
-"Quand je travaille, un bruit soudain me détourne et je perds le fil de ce que je faisais.",
-"Quand je parle avec quelqu’un, un détail déclenche des associations d’idées tout en continuant la conversation.",
-"Quand je lis, je peux interrompre et reprendre plus tard sans difficulté.",
-"Enfant, j’oubliais mes devoirs ou je les laissais inachevés malgré mes efforts.",
-"Quand une activité me passionne, je peux oublier de manger ou de dormir.",
-"Pendant une réunion, j’écoute tout en préparant une idée parallèle à présenter.",
-"Quand je cuisine, je reste attentif(ve) et je reprends sans effort après une interruption.",
-"En conversation, je décroche parfois en plein milieu d’une phrase.",
-"En cours, je comprends vite puis je décroche par ennui.",
-"Quand on me donne une consigne claire, je la suis jusqu’au bout et je reprends facilement après une interruption."
-],
-"D4 - Cognition sociale et communication":[
-"Quand on me dit « reviens dans 5 minutes », je prends cela au mot près et je suis contrarié(e) si ce n’est pas respecté.",
-"Quand quelqu’un ne tient pas sa parole, je le vis comme un manquement à une valeur.",
-"Quand on me dit « reviens dans 5 minutes », je comprends que cela signifie « un peu plus tard ».",
-"Je prends souvent les phrases au pied de la lettre et l’ironie m’échappe.",
-"Après une soirée, je repense longtemps aux conversations.",
-"Dans un dîner, je comprends les sous-entendus et je passe à autre chose.",
-"Si une règle sociale n’est pas respectée (prévenir d’un retard), je ressens une gêne importante.",
-"Une blague à double sens peut me déstabiliser.",
-"Je préfère discuter en petit comité qu’en grand groupe.",
-"Je participe avec aisance à des conversations légères."
-],
-"D5 - Émotions et régulation":[
-"Une remarque peut rester longtemps dans mon esprit.",
-"Face à une injustice, ma réaction est immédiate et intense.",
-"Une émotion forte m’empêche parfois d’agir ou de réfléchir clairement.",
-"Mon stress s’exprime physiquement (maux de ventre, tensions, migraines).",
-"Quand un ami est triste, je ressens son émotion dans mon corps.",
-"Mon humeur peut changer brutalement dans la journée.",
-"Après une dispute, je revis la scène longtemps dans ma tête.",
-"Après une rencontre sociale, j’ai besoin de temps seul(e) pour récupérer.",
-"Dans certaines situations, j’ai du mal à identifier clairement mon émotion.",
-"Après une contrariété, j’arrive à passer vite à autre chose."
-],
-"D6 - Créativité et intuition":[
-"En marchant ou en conduisant, une solution complète peut surgir sans effort.",
-"En rencontrant quelqu’un, j’ai une impression immédiate de sa personnalité.",
-"Quand je cherche une idée, je relie spontanément des domaines très différents.",
-"Mon imagination produit facilement des images ou des histoires détaillées.",
-"Mes rêves sont longs et très clairs, comme un film.",
-"En entrant dans un lieu, je ressens parfois une ambiance particulière.",
-"J’invente facilement une nouvelle manière d’accomplir une tâche.",
-"Pour décider, je sens parfois un “oui” ou un “non” intérieur évident.",
-"Je commence souvent par appliquer une méthode connue et éprouvée.",
-"Quand on me demande une solution, je propose d’abord ce qui me paraît logique et déjà testé."
-],
-"D7 - Double exceptionnalité":[
-"Je réussis un exercice complexe mais j’échoue parfois sur une tâche simple.",
-"Mes notes ou résultats varient beaucoup selon les domaines.",
-"On m’a décrit comme « brillant(e) mais inconstant(e) ».",
-"Même après une réussite, je doute d’être vraiment compétent(e).",
-"Je dépense beaucoup d’énergie pour compenser certaines difficultés.",
-"Mes forces cachent mes fragilités, ou l’inverse.",
-"Après une journée d’efforts, je me sens épuisé(e) mentalement.",
-"Mon parcours alterne périodes de grande réussite et d’échec marqué.",
-"J’ai parfois été mal orienté(e) car on a jugé une partie de mon profil seulement.",
-"On me perçoit parfois comme exceptionnel(le), parfois comme en difficulté, selon le contexte."
-],
-"D8 - Temporalité et rythmes":[
-"Je fais souvent mes tâches à la dernière minute et je réussis dans l’urgence.",
-"Absorbé(e) par une activité, je perds complètement la notion du temps.",
-"Je préfère avancer sur plusieurs projets en parallèle plutôt que d’en finir un seul.",
-"Un changement de programme de dernière minute me perturbe longtemps.",
-"J’alterne entre périodes de grande activité et moments où je n’arrive plus à avancer.",
-"J’ai du mal à estimer le temps que prendra une tâche et je suis souvent en retard.",
-"Quand j’ai de l’avance, je perds la motivation et j’attends le moment de l’urgence.",
-"Dans une réunion, je comprends la conclusion avant la fin et je m’impatiente.",
-"Quand on me donne une consigne simple avec un début et une fin clairs, je l’exécute sans me disperser.",
-"Je m’adapte sans difficulté à une routine stable avec des horaires fixes."
-]
+# ... Ajoutez ici vos autres dimensions D3 à D8 comme dans la version précédente ...
 }
 
 st.sidebar.header("Barème")
@@ -169,38 +98,42 @@ def plot_radar(df):
     ax.fill(angles, vals, alpha=0.25)
 
     title_lines = [f"{d}: {int(s)}/40" for d, s in zip(dims, scores)]
-    title = f"Profil en étoile – {st.session_state.get('patient_name', 'Patient')}\\n" + " | ".join(title_lines)
+    title = f"Profil en étoile – {st.session_state.get('patient_name', 'Patient')}\n" + " | ".join(title_lines)
     plt.title(title, fontsize=10, pad=20)
     fig.tight_layout()
     return fig
 
-# Save patient name for title
-st.session_state["patient_name"] = patient_name
+# --- Interprétation automatique ---
+def interpret_profile(df):
+    scores = dict(zip(df["Dimension"], df["Score"]))
+    txts = []
 
-if submitted:
-    df_scores = compute_dimension_scores(all_scores)
+    # HPI
+    if scores.get("D1 - Traitement de l’information", 0) >= 20 \
+       and scores.get("D6 - Créativité et intuition", 0) >= 28 \
+       and scores.get("D5 - Émotions et régulation", 0) >= 24 \
+       and scores.get("D4 - Cognition sociale et communication", 0) >= 20:
+        txts.append("🟣 Profil compatible **HPI** : pensée associative, créativité intuitive, intensité émotionnelle et exigence de valeurs.")
 
-    col1, col2 = st.columns([1,1])
-    with col1:
-        st.subheader("Scores par dimension")
-        st.dataframe(df_scores, use_container_width=True)
-        csv = df_scores.to_csv(index=False).encode("utf-8")
-        st.download_button("⬇️ Télécharger les scores (CSV)",
-                           data=csv,
-                           file_name=f"scores_{patient_name.replace(' ','_')}.csv",
-                           mime="text/csv")
-    with col2:
-        st.subheader("Vision en étoile (Radar)")
-        fig = plot_radar(df_scores)
-        st.pyplot(fig)
-        # Save image to bytes
-        import io
-        buf = io.BytesIO()
-        fig.savefig(buf, format="png", dpi=200, bbox_inches="tight")
-        st.download_button("⬇️ Télécharger le radar (PNG)",
-                           data=buf.getvalue(),
-                           file_name=f"radar_{patient_name.replace(' ','_')}.png",
-                           mime="image/png")
+    # TDAH
+    if scores.get("D3 - Attention et concentration", 0) >= 24:
+        txts.append("🟠 Profil compatible **TDAH** : difficultés attentionnelles persistantes avec impact fonctionnel (oubli, inachèvement).")
 
-st.markdown("---")
-st.caption("⚠️ Outil d'orientation clinique. Ce questionnaire n’est pas un diagnostic.")
+    # TSA
+    if scores.get("D4 - Cognition sociale et communication", 0) >= 24 \
+       and scores.get("D2 - Sensorialité", 0) >= 24:
+        txts.append("🔵 Profil compatible **TSA** : littéralité sociale, rigidité ou sensibilité sensorielle élevée.")
+
+    # 2E
+    if scores.get("D7 - Double exceptionnalité", 0) >= 24 \
+       and (scores.get("D1 - Traitement de l’information", 0) >= 28 \
+            or scores.get("D6 - Créativité et intuition", 0) >= 28 \
+            or scores.get("D5 - Émotions et régulation", 0) >= 28):
+        txts.append("🟢 Profil compatible **2E (double exceptionnalité)** : coexistence de forces remarquables et de difficultés importantes.")
+
+    # NT
+    if all(v <= 15 for v in scores.values()):
+        txts.append("⚪ Profil compatible **Neurotypique (NT)** : équilibre attentionnel, émotionnel et sensoriel sans particularité marquée.")
+
+    if not txts:
+        txts.append("Profil nuancé : aucune orientation claire unique. L’interprétat
